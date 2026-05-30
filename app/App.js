@@ -8,10 +8,10 @@ const SAMPLE_WINDOW = 10;
 const BUFFER_DURATION = 3;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const ACCENT = '#00FF87';
-const ACCENT_DIM = '#00663a';
-const ACCENT_BG = '#001a0e';
-const ACCENT_BORDER = '#003320';
+const ACCENT = '#DC143C';
+const ACCENT_DIM = '#8B0000';
+const ACCENT_BG = '#1a0008';
+const ACCENT_BORDER = '#3a0010';
 
 export default function App() {
   const [stepsPerMinute, setStepsPerMinute] = useState(0);
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: '#2a2a2a',
+    color: '#888',
     fontWeight: '500',
     marginBottom: 8,
   },
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
 
   mainSub: {
     fontSize: 13,
-    color: '#2a2a2a',
+    color: '#888',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 36,
@@ -466,12 +466,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    color: '#2a2a2a',
+    color: '#888',
     fontWeight: '500',
   },
   paceBarNum: {
     fontSize: 9,
-    color: '#333',
+    color: '#aaa',
     letterSpacing: 0.5,
   },
   paceBarTrack: {
@@ -484,6 +484,7 @@ const styles = StyleSheet.create({
   paceBarFill: {
     height: '100%',
     borderRadius: 2,
+    outputRange: ['#222222', '#333333', '#DC143C' ]
   },
 
   statsRow: {
@@ -508,7 +509,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
-    color: '#2a2a2a',
+    color: '#888',
     marginBottom: 6,
     fontWeight: '500',
   },
@@ -522,7 +523,7 @@ const styles = StyleSheet.create({
   statValueGreen: { color: ACCENT },
   statUnit: {
     fontSize: 10,
-    color: '#222',
+    color: '#666',
     marginTop: 3,
   },
   statUnitGreen: { color: ACCENT_DIM },
@@ -542,7 +543,7 @@ const styles = StyleSheet.create({
   },
   ctaBtnText: {
     fontSize: 13,
-    color: '#333',
+    color: '#888',
     fontWeight: '500',
     letterSpacing: 0.3,
   },
