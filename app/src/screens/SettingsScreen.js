@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, STEP_THRESHOLD, DAILY_STEP_GOAL } from '../constants/theme';
 
 const APPS = [
@@ -11,19 +12,63 @@ const APPS = [
   { id: 'reddit', name: 'Reddit', icon: '🤖' },
 ];
 
-export default function SettingsScreen() {
-  const [threshold, setThreshold] = useState(STEP_THRESHOLD);
-  const [dailyGoal, setDailyGoal] = useState(DAILY_STEP_GOAL);
-  const [blockedApps, setBlockedApps] = useState({
+const DEFAULTS = {
+  threshold: STEP_THRESHOLD,
+  dailyGoal: DAILY_STEP_GOAL,
+  blockedApps: {
     instagram: true,
     tiktok: true,
     youtube: true,
     twitter: false,
     snapchat: false,
     reddit: false,
-  });
-  const [strictMode, setStrictMode] = useState(false);
-  const [haptics, setHaptics] = useState(true);
+  },
+  strictMode: false,
+  haptics: true,
+};
+
+export default function SettingsScreen() {
+  const [threshold, setThreshold] = useState(DEFAULTS.threshold);
+  const [dailyGoal, setDailyGoal] = useState(DEFAULTS.dailyGoal);
+  const [blockedApps, setBlockedApps] = useState(DEFAULTS.blockedApps);
+  const [strictMode, setStrictMode] = useState(DEFAULTS.strictMode);
+  const [haptics, setHaptics] = useState(DEFAULTS.haptics);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  useEffect(() => {
+    if (loaded) saveSettings();
+  }, [threshold, dailyGoal, blockedApps, strictMode, haptics]);
+
+  const loadSettings = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('settings');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setThreshold(saved.threshold ?? DEFAULTS.threshold);
+        setDailyGoal(saved.dailyGoal ?? DEFAULTS.dailyGoal);
+        setBlockedApps(saved.blockedApps ?? DEFAULTS.blockedApps);
+        setStrictMode(saved.strictMode ?? DEFAULTS.strictMode);
+        setHaptics(saved.haptics ?? DEFAULTS.haptics);
+      }
+    } catch (e) {
+      console.log('failed to load settings', e);
+    } finally {
+      setLoaded(true);
+    }
+  };
+
+  const saveSettings = async () => {
+    try {
+      const data = JSON.stringify({ threshold, dailyGoal, blockedApps, strictMode, haptics });
+      await AsyncStorage.setItem('settings', data);
+    } catch (e) {
+      console.log('failed to save settings', e);
+    }
+  };
 
   const toggleApp = (id) => {
     setBlockedApps(prev => ({ ...prev, [id]: !prev[id] }));
@@ -35,6 +80,14 @@ export default function SettingsScreen() {
 
   const adjustGoal = (amount) => {
     setDailyGoal(prev => Math.min(Math.max(prev + amount, 1000), 20000));
+  };
+
+  const resetSettings = async () => {
+    setThreshold(DEFAULTS.threshold);
+    setDailyGoal(DEFAULTS.dailyGoal);
+    setBlockedApps(DEFAULTS.blockedApps);
+    setStrictMode(DEFAULTS.strictMode);
+    setHaptics(DEFAULTS.haptics);
   };
 
   return (
@@ -150,6 +203,10 @@ export default function SettingsScreen() {
           </View>
         </View>
       </View>
+
+      <TouchableOpacity style={styles.resetBtn} onPress={resetSettings}>
+        <Text style={styles.resetBtnText}>reset to defaults</Text>
+      </TouchableOpacity>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -302,5 +359,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPrimary,
     fontWeight: '500',
+  },
+  resetBtn: {
+    width: '100%',
+    borderWidth: 0.5,
+    borderColor: '#3a0010',
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+  },
+  resetBtnText: {
+    fontSize: 13,
+    color: colors.accent,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
 });
