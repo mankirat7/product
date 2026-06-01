@@ -1,14 +1,45 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { Text, View, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from './src/screens/HomeScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 import { colors } from './src/constants/theme';
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+  const [hasOnboarded, setHasOnboarded] = useState(null);
+
+  useEffect(() => {
+    checkOnboarding();
+  }, []);
+
+  const checkOnboarding = async () => {
+    const value = await AsyncStorage.getItem('hasOnboarded');
+    setHasOnboarded(value === 'true');
+  };
+
+  const completeOnboarding = async () => {
+    await AsyncStorage.setItem('hasOnboarded', 'true');
+    setHasOnboarded(true);
+  };
+
+  if (hasOnboarded === null) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
+
+  if (!hasOnboarded) {
+    return <OnboardingScreen onComplete={completeOnboarding} />;
+  }
+
   return (
     <NavigationContainer>
       <Tab.Navigator
