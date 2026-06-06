@@ -7,11 +7,13 @@ import HomeScreen from './src/screens/HomeScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import SplashScreen from './src/screens/SplashScreen';
 import { colors } from './src/constants/theme';
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [hasOnboarded, setHasOnboarded] = useState(null);
 
   useEffect(() => {
@@ -19,8 +21,9 @@ export default function App() {
   }, []);
 
   const checkOnboarding = async () => {
-    const value = await AsyncStorage.getItem('hasOnboarded');
-    setHasOnboarded(value === 'true');
+  await new Promise(res => setTimeout(res, 100));
+  const value = await AsyncStorage.getItem('hasOnboarded');
+  setHasOnboarded(value === 'true');
   };
 
   const completeOnboarding = async () => {
@@ -28,6 +31,10 @@ export default function App() {
     setHasOnboarded(true);
   };
 
+
+  if (showSplash) {
+  return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
   if (hasOnboarded === null) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
