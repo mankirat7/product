@@ -1,11 +1,11 @@
-import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet, ScrollView } from 'react-native';
 import { useRef } from 'react';
 import * as Haptics from 'expo-haptics';
 import usePedometer from '../hooks/usePedometer';
 import RingProgress from '../components/RingProgress';
 import PaceBar from '../components/PaceBar';
 import StatCards from '../components/StatCards';
-import { colors, BUFFER_DURATION } from '../constants/theme';
+import { colors, BUFFER_DURATION, DAILY_STEP_GOAL } from '../constants/theme';
 
 export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -54,69 +54,87 @@ export default function HomeScreen() {
     progressAnim.setValue(0);
   }
 
+  const goalPct = Math.min(Math.round((pedometer.totalSteps / DAILY_STEP_GOAL) * 100), 100);
+  const isWalking = pedometer.isWalking;
+
   return (
     <Animated.View style={[styles.root, { opacity: fadeAnim }]}>
-      {pedometer.isWalking ? (
-        <View style={styles.screen}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.heading}>home</Text>
+
+        <View style={[styles.heroCard, isWalking && styles.heroCardActive]}>
           <RingProgress
-            progressAnim={fullProgress}
-            isWalking={true}
-            scaleAnim={scaleAnim}
-            stepsPerMinute={pedometer.stepsPerMinute}
-            isBuffering={false}
-            bufferCount={0}
-          />
-          <Text style={[styles.statusLabel, { color: colors.accentDim }]}>status</Text>
-          <Text style={[styles.mainTitle, { color: colors.accent }]}>you're moving.</Text>
-          <Text style={[styles.mainSub, { color: colors.accentDim }]}>{'apps unlocked.\nkeep the pace.'}</Text>
-          <PaceBar paceAnim={paceAnim} stepsPerMinute={pedometer.stepsPerMinute} isWalking={true} />
-          <StatCards
-            leftLabel="steps today"
-            leftValue={pedometer.totalSteps.toLocaleString()}
-            leftUnit="of 10k goal"
-            rightLabel="time unlocked"
-            rightValue={pedometer.timeUnlocked}
-            rightUnit="today"
-            isWalking={true}
-          />
-          <View style={[styles.ctaBtn, { backgroundColor: colors.accent, borderColor: colors.accent }]}>
-            <Text style={[styles.ctaBtnText, { color: '#000', fontWeight: '600' }]}>unlocked — enjoy ↗</Text>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.screen}>
-          <RingProgress
-            progressAnim={progressAnim}
-            isWalking={false}
+            progressAnim={isWalking ? fullProgress : progressAnim}
+            isWalking={isWalking}
             scaleAnim={scaleAnim}
             stepsPerMinute={pedometer.stepsPerMinute}
             isBuffering={pedometer.isBuffering}
             bufferCount={pedometer.bufferCount}
           />
-          <Text style={styles.statusLabel}>status</Text>
-          <Text style={styles.mainTitle}>
-            {pedometer.isBuffering ? 'keep walking...' : "you're idle."}
+
+          <Text style={[styles.statusLabel, isWalking && styles.statusLabelActive]}>
+            status
           </Text>
-          <Text style={styles.mainSub}>
-            {pedometer.isBuffering
+          <Text style={[styles.mainTitle, isWalking && styles.mainTitleActive]}>
+            {pedometer.isBuffering && !isWalking
+              ? 'keep walking...'
+              : isWalking
+              ? "you're moving."
+              : "you're idle."}
+          </Text>
+          <Text style={[styles.mainSub, isWalking && styles.mainSubActive]}>
+            {pedometer.isBuffering && !isWalking
               ? `unlocking in ${BUFFER_DURATION - pedometer.bufferCount}s`
-              : 'start walking to unlock\nyour apps.'}
+              : isWalking
+              ? 'apps unlocked. keep the pace.'
+              : 'start walking to unlock your apps.'}
           </Text>
-          <PaceBar paceAnim={paceAnim} stepsPerMinute={pedometer.stepsPerMinute} isWalking={false} />
-          <StatCards
-            leftLabel="steps today"
-            leftValue={pedometer.totalSteps.toLocaleString()}
-            leftUnit="of 10k goal"
-            rightLabel="time locked"
-            rightValue={pedometer.timeLocked}
-            rightUnit="today"
-            isWalking={false}
+
+          <PaceBar
+            paceAnim={paceAnim}
+            stepsPerMinute={pedometer.stepsPerMinute}
+            isWalking={isWalking}
           />
-          <View style={styles.ctaBtn}>
-            <Text style={styles.ctaBtnText}>walk to unlock →</Text>
+
+          <View style={[styles.ctaBtn, isWalking && styles.ctaBtnActive]}>
+            <Text style={[styles.ctaBtnText, isWalking && styles.ctaBtnTextActive]}>
+              {isWalking ? 'unlocked — enjoy ↗' : 'walk to unlock →'}
+            </Text>
           </View>
         </View>
-      )}
+
+        <View style={styles.row}>
+          <View style={styles.miniCard}>
+            <Text style={styles.miniLabel}>steps today</Text>
+            <Text style={styles.miniValue}>{pedometer.totalSteps.toLocaleString()}</Text>
+            <Text style={styles.miniUnit}>of {DAILY_STEP_GOAL.toLocaleString()}</Text>
+          </View>
+          <View style={styles.miniCard}>
+            <Text style={styles.miniLabel}>{isWalking ? 'time unlocked' : 'time locked'}</Text>
+            <Text style={styles.miniValue}>
+              {isWalking ? pedometer.timeUnlocked : pedometer.timeLocked}
+            </Text>
+            <Text style={styles.miniUnit}>today</Text>
+          </View>
+        </View>
+
+        <View style={styles.goalCard}>
+          <Text style={styles.goalLabel}>daily goal</Text>
+          <View style={styles.goalBarTrack}>
+            <View style={[styles.goalBarFill, { width: `${goalPct}%` }]} />
+          </View>
+          <View style={styles.goalFooter}>
+            <Text style={styles.goalSteps}>{pedometer.totalSteps.toLocaleString()} steps</Text>
+            <Text style={styles.goalPct}>{goalPct}%</Text>
+          </View>
+        </View>
+
+        <View style={{ height: 24 }} />
+      </ScrollView>
     </Animated.View>
   );
 }
@@ -126,46 +144,154 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  content: {
+    padding: 24,
+    paddingTop: 64,
+    gap: 12,
+  },
+  heading: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    letterSpacing: -0.5,
+    marginBottom: 8,
+  },
+  heroCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 0.5,
+    borderColor: colors.border,
+    borderRadius: 24,
+    padding: 24,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+    gap: 8,
+  },
+  heroCardActive: {
+    backgroundColor: colors.accentBg,
+    borderColor: colors.accentBorder,
   },
   statusLabel: {
     fontSize: 10,
     letterSpacing: 2,
     textTransform: 'uppercase',
-    color: '#2a2a2a',
+    color: colors.textSecondary,
     fontWeight: '500',
-    marginBottom: 8,
+  },
+  statusLabelActive: {
+    color: colors.accentDim,
   },
   mainTitle: {
     fontSize: 32,
     fontWeight: '600',
     color: colors.textPrimary,
     letterSpacing: -0.5,
-    marginBottom: 8,
     textAlign: 'center',
+  },
+  mainTitleActive: {
+    color: colors.accent,
   },
   mainSub: {
     fontSize: 13,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: 36,
+    marginBottom: 12,
+  },
+  mainSubActive: {
+    color: colors.accentDim,
   },
   ctaBtn: {
     width: '100%',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 0.5,
     borderColor: colors.border,
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
+    marginTop: 8,
+  },
+  ctaBtnActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   ctaBtnText: {
     fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '500',
     letterSpacing: 0.3,
+  },
+  ctaBtnTextActive: {
+    color: '#000',
+    fontWeight: '600',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  miniCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 0.5,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 16,
+    gap: 4,
+  },
+  miniLabel: {
+    fontSize: 9,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  miniValue: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    letterSpacing: -0.5,
+  },
+  miniUnit: {
+    fontSize: 10,
+    color: colors.textTertiary,
+  },
+  goalCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 0.5,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 20,
+    gap: 10,
+  },
+  goalLabel: {
+    fontSize: 9,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  goalBarTrack: {
+    width: '100%',
+    height: 2,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  goalBarFill: {
+    height: '100%',
+    backgroundColor: colors.accent,
+    borderRadius: 2,
+  },
+  goalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  goalSteps: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  goalPct: {
+    fontSize: 12,
+    color: colors.accent,
+    fontWeight: '500',
   },
 });
