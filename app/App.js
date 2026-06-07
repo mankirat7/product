@@ -9,6 +9,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import { colors } from './src/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 
@@ -70,20 +71,32 @@ export default function App() {
         }}
       >
         <Tab.Screen
-          name="home"
-          component={HomeScreen}
-          options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 16, color }}>⚡</Text> }}
-        />
-        <Tab.Screen
-          name="stats"
-          component={StatsScreen}
-          options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 16, color }}>📊</Text> }}
-        />
-        <Tab.Screen
-          name="settings"
-          component={SettingsScreen}
-          options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 16, color }}>⚙️</Text> }}
-        />
+  name="home"
+  component={HomeScreen}
+  options={{
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="flash-outline" size={size} color={color} />
+    ),
+  }}
+/>
+<Tab.Screen
+  name="stats"
+  component={StatsScreen}
+  options={{
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="bar-chart-outline" size={size} color={color} />
+    ),
+  }}
+/>
+<Tab.Screen
+  name="settings"
+  component={SettingsScreen}
+  options={{
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="settings-outline" size={size} color={color} />
+    ),
+  }}
+/>
       </Tab.Navigator>
     </NavigationContainer>
   );
