@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react';
+import { checkAndUpdateStreak, loadStreak } from '../utils/streak';
+import StreakModal from '../components/StreakModal';
 import { View, Text, Animated, Easing, StyleSheet, ScrollView } from 'react-native';
 import { useRef } from 'react';
 import * as Haptics from 'expo-haptics';
@@ -16,6 +19,23 @@ export default function HomeScreen() {
 
   const pedometer = usePedometer();
 
+  const [streakData, setStreakData] = useState({ current: 0, best: 0 });
+  const [showStreakModal, setShowStreakModal] = useState(false);
+  const lastStepCount = useRef(0);
+
+  useEffect(() => {
+    loadStreak().then(s => setStreakData(s));
+  }, []);
+
+  useEffect(() => {
+    if (pedometer.totalSteps === lastStepCount.current) return;
+    lastStepCount.current = pedometer.totalSteps;
+    checkAndUpdateStreak(pedometer.totalSteps, DAILY_STEP_GOAL).then(({ streak, justCompleted }) => {
+      setStreakData(streak);
+      if (justCompleted) setShowStreakModal(true);
+    });
+  }, [pedometer.totalSteps]);
+  
   pedometer.onUnlockCallback.current = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Animated.sequence([
@@ -53,6 +73,7 @@ export default function HomeScreen() {
   } else if (!pedometer.isWalking) {
     progressAnim.setValue(0);
   }
+
 
   const goalPct = Math.min(Math.round((pedometer.totalSteps / DAILY_STEP_GOAL) * 100), 100);
   const isWalking = pedometer.isWalking;
@@ -133,8 +154,29 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        <View style={styles.streakCard}>
+          <View style={styles.streakLeft}>
+            <Text style={styles.streakIcon}>🔥</Text>
+            <View>
+              <Text style={styles.streakLabel}>current streak</Text>
+              <Text style={styles.streakValue}>{streakData.current} days</Text>
+            </View>
+          </View>
+          <View style={styles.streakRight}>
+            <Text style={styles.streakBestLabel}>best</Text>
+            <Text style={styles.streakBestValue}>{streakData.best}</Text>
+          </View>
+        </View>
+
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      {showStreakModal && (
+  <StreakModal
+    streak={streakData}
+    onClose={() => setShowStreakModal(false)}
+  />
+)}
     </Animated.View>
   );
 }
@@ -294,4 +336,53 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: '500',
   },
+  streakCard: {
+  backgroundColor: colors.surface,
+  borderWidth: 0.5,
+  borderColor: colors.border,
+  borderRadius: 16,
+  padding: 20,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+  streakLeft: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 14,
+},
+  streakIcon: {
+  fontSize: 32,
+},
+  streakLabel: {
+  fontSize: 9,
+  letterSpacing: 1.2,
+  textTransform: 'uppercase',
+  color: colors.textSecondary,
+  fontWeight: '500',
+  marginBottom: 4,
+},
+  streakValue: {
+  fontSize: 22,
+  fontWeight: '600',
+  color: colors.textPrimary,
+  letterSpacing: -0.5,
+},
+  streakRight: {
+  alignItems: 'center',
+  gap: 4,
+},
+  streakBestLabel: {
+  fontSize: 9,
+  letterSpacing: 1.2,
+  textTransform: 'uppercase',
+  color: colors.textTertiary,
+  fontWeight: '500',
+},
+  streakBestValue: {
+  fontSize: 28,
+  fontWeight: '600',
+  color: colors.accent,
+  letterSpacing: -0.5,
+},
 });
