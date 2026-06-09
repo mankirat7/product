@@ -61,4 +61,4 @@ export const radii = {
 export const STEP_THRESHOLD = 60;
 export const SAMPLE_WINDOW = 10;
 export const BUFFER_DURATION = 3;
-export const DAILY_STEP_GOAL = 10000;
+export const DAILY_STEP_GOAL = 100;

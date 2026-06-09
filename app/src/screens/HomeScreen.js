@@ -8,9 +8,12 @@ import usePedometer from '../hooks/usePedometer';
 import RingProgress from '../components/RingProgress';
 import PaceBar from '../components/PaceBar';
 import StatCards from '../components/StatCards';
-import { colors, BUFFER_DURATION, DAILY_STEP_GOAL } from '../constants/theme';
+import { colors, BUFFER_DURATION} from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '../context/SettingsContext';
 
 export default function HomeScreen() {
+  const { settings } = useSettings();
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -30,12 +33,12 @@ export default function HomeScreen() {
   useEffect(() => {
     if (pedometer.totalSteps === lastStepCount.current) return;
     lastStepCount.current = pedometer.totalSteps;
-    checkAndUpdateStreak(pedometer.totalSteps, DAILY_STEP_GOAL).then(({ streak, justCompleted }) => {
+    checkAndUpdateStreak(pedometer.totalSteps, settings.dailyGoal ).then(({ streak, justCompleted }) => {
       setStreakData(streak);
       if (justCompleted) setShowStreakModal(true);
     });
   }, [pedometer.totalSteps]);
-  
+
   pedometer.onUnlockCallback.current = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Animated.sequence([
@@ -57,7 +60,7 @@ export default function HomeScreen() {
   };
 
   Animated.timing(paceAnim, {
-    toValue: Math.min(pedometer.stepsPerMinute / 60, 1),
+    toValue: Math.min(pedometer.stepsPerMinute / settings.threshold, 1),
     duration: 600,
     easing: Easing.out(Easing.ease),
     useNativeDriver: false,
@@ -75,7 +78,7 @@ export default function HomeScreen() {
   }
 
 
-  const goalPct = Math.min(Math.round((pedometer.totalSteps / DAILY_STEP_GOAL) * 100), 100);
+  const goalPct = Math.min(Math.round((pedometer.totalSteps / settings.dailyGoal) * 100), 100);
   const isWalking = pedometer.isWalking;
 
   return (
@@ -132,7 +135,7 @@ export default function HomeScreen() {
           <View style={styles.miniCard}>
             <Text style={styles.miniLabel}>steps today</Text>
             <Text style={styles.miniValue}>{pedometer.totalSteps.toLocaleString()}</Text>
-            <Text style={styles.miniUnit}>of {DAILY_STEP_GOAL.toLocaleString()}</Text>
+            <Text style={styles.miniUnit}>of {settings.dailyGoal.toLocaleString()}</Text>
           </View>
           <View style={styles.miniCard}>
             <Text style={styles.miniLabel}>{isWalking ? 'time unlocked' : 'time locked'}</Text>
@@ -156,7 +159,7 @@ export default function HomeScreen() {
 
         <View style={styles.streakCard}>
           <View style={styles.streakLeft}>
-            <Text style={styles.streakIcon}>🔥</Text>
+            <Ionicons name="flame" size={32} color={colors.accent} />
             <View>
               <Text style={styles.streakLabel}>current streak</Text>
               <Text style={styles.streakValue}>{streakData.current} days</Text>
@@ -350,9 +353,6 @@ const styles = StyleSheet.create({
   flexDirection: 'row',
   alignItems: 'center',
   gap: 14,
-},
-  streakIcon: {
-  fontSize: 32,
 },
   streakLabel: {
   fontSize: 9,

@@ -1,93 +1,49 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput } from 'react-native';
+import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useSettings } from '../context/SettingsContext';
 import { colors, STEP_THRESHOLD, DAILY_STEP_GOAL } from '../constants/theme';
 
 const APPS = [
-  { id: 'instagram', name: 'Instagram', icon: '📸' },
-  { id: 'tiktok', name: 'TikTok', icon: '🎵' },
-  { id: 'youtube', name: 'YouTube', icon: '▶️' },
-  { id: 'twitter', name: 'Twitter / X', icon: '🐦' },
-  { id: 'snapchat', name: 'Snapchat', icon: '👻' },
-  { id: 'reddit', name: 'Reddit', icon: '🤖' },
+  { id: 'instagram', name: 'Instagram', icon: 'logo-instagram' },
+  { id: 'tiktok', name: 'TikTok', icon: 'musical-notes-outline' },
+  { id: 'youtube', name: 'YouTube', icon: 'logo-youtube' },
+  { id: 'twitter', name: 'Twitter / X', icon: 'logo-twitter' },
+  { id: 'snapchat', name: 'Snapchat', icon: 'camera-outline' },
+  { id: 'reddit', name: 'Reddit', icon: 'logo-reddit' },
 ];
 
-const DEFAULTS = {
-  threshold: STEP_THRESHOLD,
-  dailyGoal: DAILY_STEP_GOAL,
-  blockedApps: {
-    instagram: true,
-    tiktok: true,
-    youtube: true,
-    twitter: false,
-    snapchat: false,
-    reddit: false,
-  },
-  strictMode: false,
-  haptics: true,
-};
-
 export default function SettingsScreen() {
-  const [threshold, setThreshold] = useState(DEFAULTS.threshold);
-  const [dailyGoal, setDailyGoal] = useState(DEFAULTS.dailyGoal);
-  const [blockedApps, setBlockedApps] = useState(DEFAULTS.blockedApps);
-  const [strictMode, setStrictMode] = useState(DEFAULTS.strictMode);
-  const [haptics, setHaptics] = useState(DEFAULTS.haptics);
-  const [loaded, setLoaded] = useState(false);
+  const { settings, updateSettings } = useSettings();
+  const [goalInput, setGoalInput] = useState(String(settings.dailyGoal));
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  useEffect(() => {
-    if (loaded) saveSettings();
-  }, [threshold, dailyGoal, blockedApps, strictMode, haptics]);
-
-  const loadSettings = async () => {
-    try {
-      const raw = await AsyncStorage.getItem('settings');
-      if (raw) {
-        const saved = JSON.parse(raw);
-        setThreshold(saved.threshold ?? DEFAULTS.threshold);
-        setDailyGoal(saved.dailyGoal ?? DEFAULTS.dailyGoal);
-        setBlockedApps(saved.blockedApps ?? DEFAULTS.blockedApps);
-        setStrictMode(saved.strictMode ?? DEFAULTS.strictMode);
-        setHaptics(saved.haptics ?? DEFAULTS.haptics);
-      }
-    } catch (e) {
-      console.log('failed to load settings', e);
-    } finally {
-      setLoaded(true);
-    }
-  };
-
-  const saveSettings = async () => {
-    try {
-      const data = JSON.stringify({ threshold, dailyGoal, blockedApps, strictMode, haptics });
-      await AsyncStorage.setItem('settings', data);
-    } catch (e) {
-      console.log('failed to save settings', e);
-    }
+  const adjustThreshold = (amount) => {
+    const next = Math.min(Math.max(settings.threshold + amount, 20), 120);
+    updateSettings({ threshold: next });
   };
 
   const toggleApp = (id) => {
-    setBlockedApps(prev => ({ ...prev, [id]: !prev[id] }));
+    updateSettings({
+      blockedApps: { ...settings.blockedApps, [id]: !settings.blockedApps[id] }
+    });
   };
 
-  const adjustThreshold = (amount) => {
-    setThreshold(prev => Math.min(Math.max(prev + amount, 20), 120));
-  };
-
-  const adjustGoal = (amount) => {
-    setDailyGoal(prev => Math.min(Math.max(prev + amount, 1000), 20000));
-  };
-
-  const resetSettings = async () => {
-    setThreshold(DEFAULTS.threshold);
-    setDailyGoal(DEFAULTS.dailyGoal);
-    setBlockedApps(DEFAULTS.blockedApps);
-    setStrictMode(DEFAULTS.strictMode);
-    setHaptics(DEFAULTS.haptics);
+  const resetSettings = () => {
+    updateSettings({
+      threshold: STEP_THRESHOLD,
+      dailyGoal: DAILY_STEP_GOAL,
+      blockedApps: {
+        instagram: true,
+        tiktok: true,
+        youtube: true,
+        twitter: false,
+        snapchat: false,
+        reddit: false,
+      },
+      strictMode: false,
+      haptics: true,
+    });
+    setGoalInput(String(DAILY_STEP_GOAL));
   };
 
   return (
@@ -102,7 +58,7 @@ export default function SettingsScreen() {
             <Text style={styles.stepperBtnText}>−</Text>
           </TouchableOpacity>
           <View style={styles.stepperCenter}>
-            <Text style={styles.stepperValue}>{threshold}</Text>
+            <Text style={styles.stepperValue}>{settings.threshold}</Text>
             <Text style={styles.stepperUnit}>steps / min</Text>
           </View>
           <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustThreshold(5)}>
@@ -110,9 +66,9 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.thresholdHints}>
-          <Text style={[styles.hint, threshold <= 40 && styles.hintActive]}>easy</Text>
-          <Text style={[styles.hint, threshold > 40 && threshold <= 80 && styles.hintActive]}>moderate</Text>
-          <Text style={[styles.hint, threshold > 80 && styles.hintActive]}>strict</Text>
+          <Text style={[styles.hint, settings.threshold <= 40 && styles.hintActive]}>easy</Text>
+          <Text style={[styles.hint, settings.threshold > 40 && settings.threshold <= 80 && styles.hintActive]}>moderate</Text>
+          <Text style={[styles.hint, settings.threshold > 80 && styles.hintActive]}>strict</Text>
         </View>
       </View>
 
@@ -120,14 +76,35 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>daily step goal</Text>
         <Text style={styles.sectionSub}>target steps shown on stats screen</Text>
         <View style={styles.stepperCard}>
-          <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustGoal(-1000)}>
+          <TouchableOpacity style={styles.stepperBtn} onPress={() => {
+            const next = Math.min(Math.max(settings.dailyGoal - 1000, 1000), 100000);
+            updateSettings({ dailyGoal: next });
+            setGoalInput(String(next));
+          }}>
             <Text style={styles.stepperBtnText}>−</Text>
           </TouchableOpacity>
-          <View style={styles.stepperCenter}>
-            <Text style={styles.stepperValue}>{dailyGoal.toLocaleString()}</Text>
-            <Text style={styles.stepperUnit}>steps</Text>
-          </View>
-          <TouchableOpacity style={styles.stepperBtn} onPress={() => adjustGoal(1000)}>
+          <TextInput
+            style={styles.stepperInput}
+            value={goalInput}
+            keyboardType="number-pad"
+            returnKeyType="done"
+            onChangeText={(val) => setGoalInput(val)}
+            onEndEditing={() => {
+              const parsed = parseInt(goalInput);
+              if (!isNaN(parsed) && parsed >= 1000) {
+                updateSettings({ dailyGoal: Math.min(parsed, 100000) });
+                setGoalInput(String(Math.min(parsed, 100000)));
+              } else {
+                setGoalInput(String(settings.dailyGoal));
+              }
+            }}
+          />
+          <Text style={styles.stepperUnit}>steps</Text>
+          <TouchableOpacity style={styles.stepperBtn} onPress={() => {
+            const next = Math.min(Math.max(settings.dailyGoal + 1000, 1000), 100000);
+            updateSettings({ dailyGoal: next });
+            setGoalInput(String(next));
+          }}>
             <Text style={styles.stepperBtnText}>+</Text>
           </TouchableOpacity>
         </View>
@@ -140,13 +117,13 @@ export default function SettingsScreen() {
           {APPS.map((app, i) => (
             <View key={app.id}>
               <View style={styles.appRow}>
-                <Text style={styles.appIcon}>{app.icon}</Text>
+                <Ionicons name={app.icon} size={20} color={colors.textSecondary} />
                 <Text style={styles.appName}>{app.name}</Text>
                 <Switch
-                  value={blockedApps[app.id]}
+                  value={settings.blockedApps[app.id]}
                   onValueChange={() => toggleApp(app.id)}
                   trackColor={{ false: '#1a1a1a', true: colors.accentBg }}
-                  thumbColor={blockedApps[app.id] ? colors.accent : '#333'}
+                  thumbColor={settings.blockedApps[app.id] ? colors.accent : '#333'}
                   ios_backgroundColor="#1a1a1a"
                 />
               </View>
@@ -165,10 +142,10 @@ export default function SettingsScreen() {
               <Text style={styles.prefSub}>lock immediately when you stop walking</Text>
             </View>
             <Switch
-              value={strictMode}
-              onValueChange={setStrictMode}
+              value={settings.strictMode}
+              onValueChange={(val) => updateSettings({ strictMode: val })}
               trackColor={{ false: '#1a1a1a', true: colors.accentBg }}
-              thumbColor={strictMode ? colors.accent : '#333'}
+              thumbColor={settings.strictMode ? colors.accent : '#333'}
               ios_backgroundColor="#1a1a1a"
             />
           </View>
@@ -179,10 +156,10 @@ export default function SettingsScreen() {
               <Text style={styles.prefSub}>vibrate on lock and unlock</Text>
             </View>
             <Switch
-              value={haptics}
-              onValueChange={setHaptics}
+              value={settings.haptics}
+              onValueChange={(val) => updateSettings({ haptics: val })}
               trackColor={{ false: '#1a1a1a', true: colors.accentBg }}
-              thumbColor={haptics ? colors.accent : '#333'}
+              thumbColor={settings.haptics ? colors.accent : '#333'}
               ios_backgroundColor="#1a1a1a"
             />
           </View>
@@ -290,6 +267,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: colors.textTertiary,
     letterSpacing: 0.5,
+    marginRight: 12,
   },
   thresholdHints: {
     flexDirection: 'row',
@@ -310,9 +288,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     gap: 12,
-  },
-  appIcon: {
-    fontSize: 20,
   },
   appName: {
     flex: 1,
@@ -363,7 +338,7 @@ const styles = StyleSheet.create({
   resetBtn: {
     width: '100%',
     borderWidth: 0.5,
-    borderColor: '#3a0010',
+    borderColor: colors.accentBorder,
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
@@ -373,5 +348,14 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: '500',
     letterSpacing: 0.3,
+  },
+  stepperInput: {
+    flex: 1,
+    fontSize: 28,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    letterSpacing: -0.5,
+    textAlign: 'center',
+    paddingVertical: 16,
   },
 });

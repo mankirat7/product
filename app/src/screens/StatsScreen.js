@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Pedometer } from 'expo-sensors';
-import { colors, spacing, DAILY_STEP_GOAL } from '../constants/theme';
+import { colors, spacing } from '../constants/theme';
+import { useSettings } from '../context/SettingsContext';
 
 const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 export default function StatsScreen() {
+  const { settings } = useSettings();
   const [weekData, setWeekData] = useState([]);
   const [todaySteps, setTodaySteps] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function StatsScreen() {
   const maxSteps = Math.max(...weekData.map(d => d.steps), 1);
   const weekTotal = weekData.reduce((sum, d) => sum + d.steps, 0);
   const weekAvg = weekData.length > 0 ? Math.round(weekTotal / weekData.length) : 0;
-  const goalPct = Math.min(Math.round((todaySteps / DAILY_STEP_GOAL) * 100), 100);
+  const goalPct = Math.min(Math.round((todaySteps / settings.dailyGoal) * 100), 100);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -124,7 +126,7 @@ export default function StatsScreen() {
           </View>
         </View>
         <Text style={styles.goalSubtext}>
-          {Math.max(DAILY_STEP_GOAL - todaySteps, 0).toLocaleString()} steps to reach {DAILY_STEP_GOAL.toLocaleString()} today
+          {Math.max(settings.dailyGoal - todaySteps, 0).toLocaleString()} steps to reach {settings.dailyGoal.toLocaleString()} today
         </Text>
       </View>
     </ScrollView>

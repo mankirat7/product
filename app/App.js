@@ -10,10 +10,11 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import { colors } from './src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { SettingsProvider } from './src/context/SettingsContext';
 
 const Tab = createBottomTabNavigator();
 
-export default function App() {
+function AppNavigator() {
   const [showSplash, setShowSplash] = useState(true);
   const [hasOnboarded, setHasOnboarded] = useState(null);
 
@@ -22,9 +23,10 @@ export default function App() {
   }, []);
 
   const checkOnboarding = async () => {
-  await new Promise(res => setTimeout(res, 100));
-  const value = await AsyncStorage.getItem('hasOnboarded');
-  setHasOnboarded(value === 'true');
+    await AsyncStorage.removeItem('settings');
+    await new Promise(res => setTimeout(res, 100));
+    const value = await AsyncStorage.getItem('hasOnboarded');
+    setHasOnboarded(value === 'true');
   };
 
   const completeOnboarding = async () => {
@@ -32,10 +34,10 @@ export default function App() {
     setHasOnboarded(true);
   };
 
-
   if (showSplash) {
-  return <SplashScreen onComplete={() => setShowSplash(false)} />;
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
+
   if (hasOnboarded === null) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
@@ -71,33 +73,41 @@ export default function App() {
         }}
       >
         <Tab.Screen
-  name="home"
-  component={HomeScreen}
-  options={{
-    tabBarIcon: ({ color, size }) => (
-      <Ionicons name="flash-outline" size={size} color={color} />
-    ),
-  }}
-/>
-<Tab.Screen
-  name="stats"
-  component={StatsScreen}
-  options={{
-    tabBarIcon: ({ color, size }) => (
-      <Ionicons name="bar-chart-outline" size={size} color={color} />
-    ),
-  }}
-/>
-<Tab.Screen
-  name="settings"
-  component={SettingsScreen}
-  options={{
-    tabBarIcon: ({ color, size }) => (
-      <Ionicons name="settings-outline" size={size} color={color} />
-    ),
-  }}
-/>
+          name="home"
+          component={HomeScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="flash-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="stats"
+          component={StatsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="bar-chart-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="settings"
+          component={SettingsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="settings-outline" size={size} color={color} />
+            ),
+          }}
+        />
       </Tab.Navigator>
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <SettingsProvider>
+      <AppNavigator />
+    </SettingsProvider>
   );
 }

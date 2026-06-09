@@ -2,6 +2,8 @@ import { View, Text, StyleSheet, Animated, TouchableOpacity, Dimensions } from '
 import { useEffect, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -57,7 +59,7 @@ export default function StreakModal({ streak, onClose }) {
             }
           ]}
         >
-          <Text style={styles.icon}>🔥</Text>
+          <Ionicons name="flame" size={36} color={colors.accent} />
         </Animated.View>
 
         {isNewRecord && (
