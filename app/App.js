@@ -3,27 +3,42 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './src/lib/supabase';
 import HomeScreen from './src/screens/HomeScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import AuthScreen from './src/screens/AuthScreen';
 import { colors } from './src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SettingsProvider } from './src/context/SettingsContext';
+
 
 const Tab = createBottomTabNavigator();
 
 function AppNavigator() {
   const [showSplash, setShowSplash] = useState(true);
   const [hasOnboarded, setHasOnboarded] = useState(null);
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     checkOnboarding();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkOnboarding = async () => {
-    await AsyncStorage.removeItem('settings');
     await new Promise(res => setTimeout(res, 100));
     const value = await AsyncStorage.getItem('hasOnboarded');
     setHasOnboarded(value === 'true');
@@ -38,7 +53,7 @@ function AppNavigator() {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
-  if (hasOnboarded === null) {
+  if (hasOnboarded === null || authLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color={colors.accent} />
@@ -48,6 +63,10 @@ function AppNavigator() {
 
   if (!hasOnboarded) {
     return <OnboardingScreen onComplete={completeOnboarding} />;
+  }
+
+  if (!session) {
+    return <AuthScreen onAuth={() => setSession(true)} />;
   }
 
   return (
