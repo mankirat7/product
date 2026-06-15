@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Pedometer } from 'expo-sensors';
 import { STEP_THRESHOLD, SAMPLE_WINDOW, BUFFER_DURATION } from '../constants/theme';
+import { syncSteps } from '../lib/stepsSync';
 
 export default function usePedometer() {
   const [stepsPerMinute, setStepsPerMinute] = useState(0);
@@ -52,6 +53,7 @@ export default function usePedometer() {
         todayStart.setHours(0, 0, 0, 0);
         const todaySteps = await Pedometer.getStepCountAsync(todayStart, todayEnd);
         setTotalSteps(todaySteps.steps);
+        syncSteps(todaySteps.steps);
 
         if (spm >= STEP_THRESHOLD) {
           idleBuffer.current = 0;

@@ -13,7 +13,7 @@ import AuthScreen from './src/screens/AuthScreen';
 import { colors } from './src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SettingsProvider } from './src/context/SettingsContext';
-
+import SocialScreen from './src/screens/SocialScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -91,6 +91,17 @@ function AppNavigator() {
           },
         }}
       >
+
+        <Tab.Screen
+          name="friends"
+          component={SocialScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="people-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        
         <Tab.Screen
           name="home"
           component={HomeScreen}
