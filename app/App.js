@@ -92,15 +92,7 @@ function AppNavigator() {
         }}
       >
 
-        <Tab.Screen
-          name="friends"
-          component={SocialScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="people-outline" size={size} color={color} />
-            ),
-          }}
-        />
+
         
         <Tab.Screen
           name="home"
@@ -120,6 +112,16 @@ function AppNavigator() {
             ),
           }}
         />
+        <Tab.Screen
+          name="friends"
+          component={SocialScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="people-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        
         <Tab.Screen
           name="settings"
           component={SettingsScreen}
