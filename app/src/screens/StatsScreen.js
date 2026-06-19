@@ -72,7 +72,7 @@ export default function StatsScreen() {
 
       <View style={styles.row}>
         <View style={styles.miniCard}>
-          <Text style={styles.miniLabel}>week total</Text>
+          <Text style={styles.miniLabel}>last 7 day total</Text>
           <Text style={styles.miniValue}>{weekTotal.toLocaleString()}</Text>
           <Text style={styles.miniUnit}>steps</Text>
         </View>

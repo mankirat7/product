@@ -14,6 +14,8 @@ import { colors } from './src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SettingsProvider } from './src/context/SettingsContext';
 import SocialScreen from './src/screens/SocialScreen';
+import { backfillSteps } from './src/lib/stepsSync';
+
 
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +35,7 @@ function AppNavigator() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) backfillSteps();
     });
 
     return () => subscription.unsubscribe();
